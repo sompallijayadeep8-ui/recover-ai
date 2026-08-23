@@ -24,3 +24,37 @@ RecoverAI:
 - Express.js
 - PostgreSQL
 - AI Agent / LLM
+
+
+
+                    RECOVERAI
+                        │
+                        ▼
+                 1. Payment Data
+                        │
+                        ▼
+                 2. Failure Event
+                        │
+                        ▼
+                 3. AI Analysis
+                        │
+                        ▼
+                 4. Recovery Decision
+                        │
+                        ▼
+                 5. Policy Guardrails
+                        │
+                        ▼
+                 6. Recovery Action
+                        │
+                        ▼
+                 7. Audit Log
+                        │
+                        ▼
+                 8. PostgreSQL
+                        │
+                        ▼
+                 9. React Dashboard
+                        │
+                        ▼
+                 10. Evaluation
