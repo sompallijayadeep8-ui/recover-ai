@@ -1,7 +1,31 @@
+
+require("dotenv").config();
+
 const express = require("express");
 const cors = require("cors");
 
+require("dotenv").config();
+
 const transactions = require("./data/transactions");
+
+
+
+const {
+    generateRecoveryDecision
+} = require("./services/ai/ai.service");
+
+
+
+const {
+    calculateRecoveryScore
+} = require("./services/scoring.service");
+
+
+
+
+const {
+    generateBaselineDecision
+} = require("./services/decision.service");
 
 
 const {
@@ -11,6 +35,14 @@ const {
 const {
     validateRecovery
 } = require("./services/policy.service");
+
+
+const customers = require("./data/customers");
+
+const {
+    getCustomerById,
+    buildCustomerContext
+} = require("./services/customer.service");
 
 const app = express();
 
@@ -75,7 +107,7 @@ app.post("/api/transactions/:id/retry", (req, res) => {
 });
 
 
-app.post("/api/recovery/:id/analyze", (req, res) => {
+app.post("/api/recovery/:id/analyze", async (req, res) => {
 
     const transaction = transactions.find(
         (txn) => txn.id === req.params.id
@@ -87,17 +119,82 @@ app.post("/api/recovery/:id/analyze", (req, res) => {
         });
     }
 
-    const decision = analyzeTransaction(transaction);
+    //const decision = analyzeTransaction(transaction);
+
+
+     const customer =
+        getCustomerById(transaction.customerId);
+
+    if (!customer) {
+        return res.status(404).json({
+            error: "Customer not found"
+        });
+    }
+
+    const customerContext =
+        buildCustomerContext(customer);
+
+        const scoring = calculateRecoveryScore(
+    transaction,
+    customer
+);
+
+    /* const decision = {
+    classification:
+        scoring.score >= 70
+            ? "RECOVERABLE"
+            : scoring.score >= 40
+                ? "UNCERTAIN"
+                : "NOT_RECOVERABLE",
+
+    recoveryScore: scoring.score,
+
+    recommendedAction:
+        scoring.score >= 70
+            ? "RETRY"
+            : "HUMAN_REVIEW",
+
+    confidence: scoring.score / 100,
+
+    reason: "Decision generated from recovery scoring baseline",
+
+    factors: scoring.factors
+};*/
+
+     const decision =
+    generateBaselineDecision(scoring);
+
+
+    const aiDecision =
+    await generateRecoveryDecision({
+        transaction,
+        customerContext,
+        scoring
+    });
+
 
     const policy = validateRecovery(
         transaction,
-        decision
+        aiDecision
     );
 
     res.json({
         transaction,
-        decision,
+        //decision,
+        customer : customerContext,
+        baseline : generateBaselineDecision,
+        aiDecision,
         policy
+    });
+});
+
+app.use((err, req, res, next) => {
+
+    console.error(err);
+
+    res.status(500).json({
+        error: "Internal server error",
+        reason: err.message
     });
 });
 const PORT = 3000;
