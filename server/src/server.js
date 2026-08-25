@@ -4,9 +4,17 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
-require("dotenv").config();
+
 
 const transactions = require("./data/transactions");
+
+
+const {
+    createAuditLog,
+    getAuditLogs,
+    getAuditLogByTransactionId,
+    getAuditLogsBySeverity
+} = require("./services/audit.service");
 
 
 
@@ -36,6 +44,10 @@ const {
     validateRecovery
 } = require("./services/policy.service");
 
+
+const {
+    compareDecisions
+} = require("./services/comparison.service");
 
 const customers = require("./data/customers");
 
@@ -106,6 +118,48 @@ app.post("/api/transactions/:id/retry", (req, res) => {
     });
 });
 
+ app.get("/api/audit/:transactionId", (req, res) => {
+
+    const logs =
+        getAuditLogByTransactionId(
+            req.params.transactionId
+        );
+
+    res.json(logs);
+
+});
+
+
+    app.get("/api/audit", (req, res) => {
+
+    res.json(getAuditLogs());
+
+});
+
+app.get("/api/audit/severity/:severity", (req, res) => {
+
+    const severity =
+        req.params.severity.toUpperCase();
+
+    const validSeverities = [
+        "LOW",
+        "MEDIUM",
+        "HIGH"
+    ];
+
+    if (!validSeverities.includes(severity)) {
+        return res.status(400).json({
+            error: "Invalid severity",
+            allowedValues: validSeverities
+        });
+    }
+
+    const logs =
+        getAuditLogsBySeverity(severity);
+
+    res.json(logs);
+});
+
 
 app.post("/api/recovery/:id/analyze", async (req, res) => {
 
@@ -118,6 +172,9 @@ app.post("/api/recovery/:id/analyze", async (req, res) => {
             error: "Transaction not found"
         });
     }
+
+
+   
 
     //const decision = analyzeTransaction(transaction);
 
@@ -161,8 +218,10 @@ app.post("/api/recovery/:id/analyze", async (req, res) => {
     factors: scoring.factors
 };*/
 
-     const decision =
-    generateBaselineDecision(scoring);
+    
+    const baselineDecision = generateBaselineDecision(scoring);
+    
+
 
 
     const aiDecision =
@@ -172,19 +231,37 @@ app.post("/api/recovery/:id/analyze", async (req, res) => {
         scoring
     });
 
+    const comparison =
+    compareDecisions(
+        baselineDecision,
+        aiDecision
+    );
+
 
     const policy = validateRecovery(
         transaction,
-        aiDecision
+        aiDecision,
+        customer
     );
+
+    const auditLog = createAuditLog({
+    transaction,
+    baseline: baselineDecision,
+    aiDecision,
+    comparison,
+    policy
+});
 
     res.json({
         transaction,
         //decision,
+
         customer : customerContext,
-        baseline : generateBaselineDecision,
+        baseline : baselineDecision,
         aiDecision,
-        policy
+        comparison,
+        policy,
+        auditId: auditLog.id
     });
 });
 
