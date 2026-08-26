@@ -1,11 +1,13 @@
-const customers = require("../data/customers");
+const {
+    getCustomerById: findCustomerById
+} = require("../repositories/customer.repository");
 
-function getCustomerById(customerId) {
 
-    return customers.find(
-        customer => customer.id === customerId
-    );
+async function getCustomerById(customerId) {
+
+    return await findCustomerById(customerId);
 }
+
 
 function buildCustomerContext(customer) {
 
@@ -14,42 +16,65 @@ function buildCustomerContext(customer) {
     }
 
     const successRate =
-        customer.totalPayments === 0
+        customer.total_payments === 0
             ? 0
-            : customer.successfulPayments /
-              customer.totalPayments;
+            : customer.successful_payments /
+              customer.total_payments;
+
 
     const averageTransactionAmount =
-        customer.totalPayments === 0
+        customer.total_payments === 0
             ? 0
-            : customer.totalSpent /
-              customer.totalPayments;
+            : Number(customer.total_spent) /
+              customer.total_payments;
+
 
     return {
+
         id: customer.id,
 
         paymentHistory: {
-            totalPayments: customer.totalPayments,
-            successfulPayments: customer.successfulPayments,
-            failedPayments: customer.failedPayments,
-            successRate: Number(successRate.toFixed(2))
+
+            totalPayments:
+                customer.total_payments,
+
+            successfulPayments:
+                customer.successful_payments,
+
+            failedPayments:
+                customer.failed_payments,
+
+            successRate:
+                Number(
+                    successRate.toFixed(2)
+                )
         },
 
         riskSignals: {
-            chargebacks: customer.chargebacks
+
+            chargebacks:
+                customer.chargebacks
         },
 
         recoveryHistory: {
-            previousRecoveries: customer.previousRecoveries
+
+            previousRecoveries:
+                customer.previous_recoveries
         },
 
         spending: {
-            totalSpent: customer.totalSpent,
+
+            totalSpent:
+                Number(customer.total_spent),
+
             averageTransactionAmount:
-                Number(averageTransactionAmount.toFixed(2))
+                Number(
+                    averageTransactionAmount.toFixed(2)
+                )
         }
     };
 }
+
 
 module.exports = {
     getCustomerById,

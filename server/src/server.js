@@ -6,7 +6,9 @@ const cors = require("cors");
 
 
 
-const transactions = require("./data/transactions");
+
+
+
 
 
 const {
@@ -21,6 +23,13 @@ const {
 const {
     generateRecoveryDecision
 } = require("./services/ai/ai.service");
+
+
+const {
+    getTransactionById,
+    getAllTransactions,
+    recoverTransaction
+} = require("./repositories/transaction.repository");
 
 
 
@@ -49,7 +58,9 @@ const {
     compareDecisions
 } = require("./services/comparison.service");
 
-const customers = require("./data/customers");
+
+
+
 
 const {
     getCustomerById,
@@ -68,13 +79,12 @@ app.get("/api/health", (req, res) => {
     });
 });
 
-app.get("/api/transactions", (req, res) => {
+/*app.get("/api/transactions", (req, res) => {
     res.json(transactions);
-});
+});*/
 
 
-
-app.get("/api/transactions/:id", (req, res) => {
+/*app.get("/api/transactions/:id", (req, res) => {
 
     const transaction = transactions.find(
         (txn) => txn.id === req.params.id
@@ -87,14 +97,52 @@ app.get("/api/transactions/:id", (req, res) => {
     }
 
     res.json(transaction);
+});*/
+
+
+app.get("/api/transactions", async (req, res) => {
+
+    const transactions =
+        await getAllTransactions();
+
+    res.json(transactions);
 });
 
+app.get(
+    "/api/transactions/:id",
+    async (req, res) => {
 
-app.post("/api/transactions/:id/retry", (req, res) => {
+        const transaction =
+            await getTransactionById(
+                req.params.id
+            );
 
-    const transaction = transactions.find(
+        if (!transaction) {
+            return res.status(404).json({
+                error: "Transaction not found"
+            });
+        }
+
+        res.json({
+            id: transaction.id,
+            customerId: transaction.customer_id,
+            amount: Number(transaction.amount),
+            currency: transaction.currency,
+            status: transaction.status,
+            failureReason: transaction.failure_reason,
+            retryCount: transaction.retry_count
+        });
+    }
+);
+
+
+app.post("/api/transactions/:id/retry", async (req, res) => {
+
+   /* const transaction = transactions.find(
         (txn) => txn.id === req.params.id
-    );
+    );*/
+
+
 
     if (!transaction) {
         return res.status(404).json({
@@ -108,14 +156,23 @@ app.post("/api/transactions/:id/retry", (req, res) => {
         });
     }
 
-    transaction.retryCount += 1;
-    transaction.status = "SUCCESS";
-    transaction.failureReason = null;
+   const updatedTransaction =
+    await recoverTransaction(
+        req.params.id
+    );
 
     res.json({
-        message: "Payment recovered successfully",
-        transaction
-    });
+    message: "Payment recovered successfully",
+    transaction: {
+        id: updatedTransaction.id,
+        customerId: updatedTransaction.customer_id,
+        amount: Number(updatedTransaction.amount),
+        currency: updatedTransaction.currency,
+        status: updatedTransaction.status,
+        failureReason: updatedTransaction.failure_reason,
+        retryCount: updatedTransaction.retry_count
+    }
+});
 });
 
  app.get("/api/audit/:transactionId", async (req, res) => {
@@ -167,8 +224,13 @@ app.get("/api/audit/severity/:severity", async (req, res) => {
 
 app.post("/api/recovery/:id/analyze", async (req, res) => {
 
-    const transaction = transactions.find(
+    /*const transaction = transactions.find(
         (txn) => txn.id === req.params.id
+    );*/
+
+    const transaction =
+    await getTransactionById(
+        req.params.id
     );
 
     if (!transaction) {
@@ -180,11 +242,11 @@ app.post("/api/recovery/:id/analyze", async (req, res) => {
 
    
 
-    //const decision = analyzeTransaction(transaction);
+   // const decision = analyzeTransaction(transaction);
 
+      const customer =
+      await  getCustomerById(transaction.customerId);
 
-     const customer =
-        getCustomerById(transaction.customerId);
 
     if (!customer) {
         return res.status(404).json({
