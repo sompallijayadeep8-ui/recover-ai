@@ -118,10 +118,10 @@ app.post("/api/transactions/:id/retry", (req, res) => {
     });
 });
 
- app.get("/api/audit/:transactionId", (req, res) => {
+ app.get("/api/audit/:transactionId", async (req, res) => {
 
     const logs =
-        getAuditLogByTransactionId(
+      await  getAuditLogByTransactionId(
             req.params.transactionId
         );
 
@@ -130,13 +130,17 @@ app.post("/api/transactions/:id/retry", (req, res) => {
 });
 
 
-    app.get("/api/audit", (req, res) => {
+    app.get("/api/audit", async (req, res) => {
 
-    res.json(getAuditLogs());
+   // res.json(getAuditLogs());
+
+   const logs = await getAuditLogs();
+
+   res.json(logs);
 
 });
 
-app.get("/api/audit/severity/:severity", (req, res) => {
+app.get("/api/audit/severity/:severity", async (req, res) => {
 
     const severity =
         req.params.severity.toUpperCase();
@@ -155,7 +159,7 @@ app.get("/api/audit/severity/:severity", (req, res) => {
     }
 
     const logs =
-        getAuditLogsBySeverity(severity);
+       await getAuditLogsBySeverity(severity);
 
     res.json(logs);
 });
@@ -244,7 +248,7 @@ app.post("/api/recovery/:id/analyze", async (req, res) => {
         customer
     );
 
-    const auditLog = createAuditLog({
+    const auditLog =await createAuditLog({
     transaction,
     baseline: baselineDecision,
     aiDecision,

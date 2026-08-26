@@ -186,3 +186,102 @@ And because this involves OpenAI/API information,
 
 
                           {"transaction":{"id":"TXN_1007","customerId":"CUS_105","amount":50000,"currency":"INR","status":"FAILED","failureReason":"NETWORK_TIMEOUT","retryCount":0},"customer":{"id":"CUS_105","paymentHistory":{"totalPayments":20,"successfulPayments":20,"failedPayments":0,"successRate":1},"riskSignals":{"chargebacks":0},"recoveryHistory":{"previousRecoveries":6},"spending":{"totalSpent":100000,"averageTransactionAmount":5000}},"baseline":{"classification":"RECOVERABLE","recoveryScore":75,"recommendedAction":"RETRY","confidence":0.75,"reason":"Decision generated from recovery scoring baseline","factors":[{"factor":"recoverabl
+
+
+
+                          data base :
+
+
+
+
+                           Column	PostgreSQL type	Why
+
+
+id	BIGSERIAL	Auto-generated numeric ID
+transaction_id	VARCHAR(50)	TXN_1009
+created_at	TIMESTAMPTZ	Timestamp with timezone
+classifications	VARCHAR(30)	Text values
+scores	INTEGER	15, 80, 92
+confidence	DECIMAL(4,3)	0.150, 0.800
+agreements	BOOLEAN	true/false
+score_difference	INTEGER	65
+severity	VARCHAR(10)	LOW/MEDIUM/HIGH
+policy reason	TEXT	Variable-length explanation
+
+
+            audit_logs
+│
+├── id
+├── transaction_id
+├── created_at
+│
+├── BASELINE
+│   ├── classification
+│   ├── score
+│   ├── action
+│   └── confidence
+│
+├── AI
+│   ├── classification
+│   ├── score
+│   ├── action
+│   └── confidence
+│
+├── COMPARISON
+│   ├── classification_agreement
+│   ├── action_agreement
+│   ├── score_difference
+│   └── severity
+│
+└── POLICY
+    ├── decision
+    ├── action
+    └── reason
+
+
+
+
+
+    recover_ai=# SELECT * FROM audit_logs;
+ id | transaction_id | created_at | baseline_classification | baseline_score | baseline_action | baseline_confidence | ai_classification | ai_score | ai_action | ai_confidence | classification_agreement | action_agreement | score_difference | severity | policy_decision | policy_action | policy_reason 
+----+----------------+------------+-------------------------+----------------+-----------------+---------------------+-------------------+----------+-----------+---------------+--------------------------+------------------+------------------+----------+-----------------+---------------+---------------
+(0 rows)
+
+(END)
+
+
+
+
+            after integrating database :
+
+
+            "transaction":{"id":"TXN_1009","customerId":"CUS_105","amount":4999,"currency":"INR","status":"FAILED","failureReason":"INSUFFICIENT_FUNDS","retryCount":0},"customer":{"id":"CUS_105","paymentHistory":{"totalPayments":20,"successfulPayments":20,"failedPayments":0,"successRate":1},"riskSignals":{"chargebacks":0},"recoveryHistory":{"previousRecoveries":6},"spending":{"totalSpent":100000,"averageTransactionAmount":5000}},"baseline":{"classification":"NOT_RECOVERABLE","recoveryScore":15,"recommendedAction":"HUMAN_REVIEW","confidence":0.15,"reason":"Decision generated from recovery scoring baseline","factors":[{"factor":"non_recoverable_failure","impact":-40},{"factor":"customer_success_rate","impact":25},{"factor":"no_chargebacks","impact":15},{"factor":"previous_recoveries","impact":15},{"factor":"retry_history","impact":0}]},"aiDecision":{"classification":"RECOVERABLE","recoveryScore":80,"recommendedAction":"RETRY","confidence":0.8,"reason":"Customer has a high success rate, no chargebacks, and a sufficient recovery history. The failure reason is due to insufficient funds, which is a common issue. Retrying the payment is recommended to resolve the issue."},"comparison":{"classificationAgreement":false,"actionAgreement":false,"scoreDifference":65,"severity":"HIGH"},"policy":{"decision":"BLOCK","action":"NONE","reason":"Failure type is not eligible for automatic recovery"},"auditId":"AUDIT_2"}%      
+
+
+
+
+
+             sompallijayadeep@sompallis-MacBook-Air server % curl http://localhost:3000/api/audit
+[{"id":"AUDIT_1","timestamp":"2026-08-25T14:36:20.088Z","transactionId":"TXN_1009","baseline":{"classification":"NOT_RECOVERABLE","recoveryScore":15,"recommendedAction":"HUMAN_REVIEW","confidence":0.15},"aiDecision":{"classification":"RECOVERABLE","recoveryScore":80,"recommendedAction":"RETRY","confidence":0.8},"comparison":{"classificationAgreement":false,"actionAgreement":false,"scoreDifference":65,"severity":"HIGH"},"policy":{"decision":"BLOCK","action":"NONE","reason":"Failure type is not eligible for automatic recovery"}},{"id":"AUDIT_2","timestamp":"2026-08-26T16:12:29.250Z","transactionId":"TXN_1009","baseline":{"classification":"NOT_RECOVERABLE","recoveryScore":15,"recommendedAction":"HUMAN_REVIEW","confidence":0.15},"aiDecision":{"classification":"RECOVERABLE","recoveryScore":80,"recommendedAction":"RETRY","confidence":0.8},"comparison":{"classificationAgreement":false,"actionAgreement":false,"scoreDifference":65,"severity":"HIGH"},"policy":{"decision":"BLOCK","action":"NONE","reason":"Failure type is not eligible for automatic recovery"}}]%              
+sompallijayadeep@som  
+
+i :3000
+COMMAND   PID             USER   FD   TYPE            DEVICE SIZE/OFF NODE NAME
+node    77137 sompallijayadeep   16u  IPv6 0xc2bd1432b0f90f6      0t0  TCP *:hbci (LISTEN)
+
+
+
+             DB is Working 
+
+             sompallijayadeep@sompallis-MacBook-Air server % curl http://localhost:3000/api/audit
+[{"id":"3","transaction_id":"TXN_1009","created_at":"2026-08-26T16:35:02.111Z","baseline_classification":"NOT_RECOVERABLE","baseline_score":15,"baseline_action":"HUMAN_REVIEW","baseline_confidence":"0.150","ai_classification":"RECOVERABLE","ai_score":80,"ai_action":"RETRY","ai_confidence":"0.800","classification_agreement":false,"action_agreement":false,"score_difference":65,"severity":"HIGH","policy_decision":"BLOCK","policy_action":"NONE","policy_reason":"Failure type is not eligible for automatic recovery"},{"id":"2","transaction_id":"TXN_1009","created_at":"2026-08-26T16:27:21.113Z","baseline_classification":"NOT_RECOVERABLE","baseline_score":15,"baseline_action":"HUMAN_REVIEW","baseline_confidence":"0.150","ai_classification":"RECOVERABLE","ai_score":80,"ai_action":"RETRY","ai_confidence":"0.800","classification_agreement":false,"action_agreement":false,"score_difference":65,"severity":"HIGH","policy_decision":"BLOCK","policy_action":"NONE","policy_reason":"Failure type is not eligible for automatic recovery"}]%     
+
+
+[{"id":"3","transaction_id":"TXN_1009","created_at":"2026-08-26T16:35:02.111Z","baseline_classification":"NOT_RECOVERABLE","baseline_score":15,"baseline_action":"HUMAN_REVIEW","baseline_confidence":"0.150","ai_classification":"RECOVERABLE","ai_score":80,"ai_action":"RETRY","ai_confidence":"0.800","classification_agreement":false,"action_agreement":false,"score_difference":65,"severity":"HIGH","policy_decision":"BLOCK","policy_action":"NONE","policy_reason":"Failure type is not eligible for automatic recovery"},{"id":"2","transaction_id":"TXN_1009","created_at":"2026-08-26T16:27:21.113Z","baseline_classification":"NOT_RECOVERABLE","baseline_score":15,"baseline_action":"HUMAN_REVIEW","baseline_confidence":"0.150","ai_classification":"RECOVERABLE","ai_score":80,"ai_action":"RETRY","ai_confidence":"0.800","classification_agreement":false,"action_agreement":false,"score_difference":65,"severity":"HIGH","policy_decision":"BLOCK","policy_action":"NONE","policy_reason":"Failure type is not eligible for automatic recovery"}]%  
+
+[{"id":"3","transaction_id":"TXN_1009","created_at":"2026-08-26T16:35:02.111Z","baseline_classification":"NOT_RECOVERABLE","baseline_score":15,"baseline_action":"HUMAN_REVIEW","baseline_confidence":"0.150","ai_classification":"RECOVERABLE","ai_score":80,"ai_action":"RETRY","ai_confidence":"0.800","classification_agreement":false,"action_agreement":false,"score_difference":65,"severity":"HIGH","policy_decision":"BLOCK","policy_action":"NONE","policy_reason":"Failure type is not eligible for automatic recovery"},{"id":"2","transaction_id":"TXN_1009","created_at":"2026-08-26T16:27:21.113Z","baseline_classification":"NOT_RECOVERABLE","baseline_score":15,"baseline_action":"HUMAN_REVIEW","baseline_confidence":"0.150","ai_classification":"RECOVERABLE","ai_score":80,"ai_action":"RETRY","ai_confidence":"0.800","classification_agreement":false,"action_agreement":false,"score_difference":65,"severity":"HIGH","policy_decision":"BLOCK","policy_action":"NONE","policy_reason":"Failure type is not eligible for automatic recovery"}]%     
+
+
+
+
+

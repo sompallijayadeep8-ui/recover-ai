@@ -1,7 +1,7 @@
-const auditLogs = [];
+const pool = require("../config/database");
 
 
-function createAuditLog({
+async function createAuditLog({
     transaction,
     baseline,
     aiDecision,
@@ -9,73 +9,157 @@ function createAuditLog({
     policy
 }) {
 
-    const auditEntry = {
-        id: `AUDIT_${auditLogs.length + 1}`,
+    const query = `
+        INSERT INTO audit_logs (
 
-        timestamp: new Date().toISOString(),
+            transaction_id,
+            baseline_classification,
+            baseline_score,
+            baseline_action,
+            baseline_confidence,
 
-        transactionId: transaction.id,
+            ai_classification,
+            ai_score,
+            ai_action,
+            ai_confidence,
 
-        baseline: {
-            classification: baseline.classification,
-            recoveryScore: baseline.recoveryScore,
-            recommendedAction: baseline.recommendedAction,
-            confidence: baseline.confidence
-        },
+            classification_agreement,
+            action_agreement,
+            score_difference,
+            severity,
 
-        aiDecision: {
-            classification: aiDecision.classification,
-            recoveryScore: aiDecision.recoveryScore,
-            recommendedAction: aiDecision.recommendedAction,
-            confidence: aiDecision.confidence
-        },
+            policy_decision,
+            policy_action,
+            policy_reason
 
-        comparison: {
-            classificationAgreement:
-                comparison.classificationAgreement,
+        )
 
-            actionAgreement:
-                comparison.actionAgreement,
+        VALUES (
 
-            scoreDifference:
-                comparison.scoreDifference,
+            $1,
+            $2,
+            $3,
+            $4,
+            $5,
 
-            severity:
-                comparison.severity
-        },
+            $6,
+            $7,
+            $8,
+            $9,
 
-        policy: {
-            decision: policy.decision,
-            action: policy.action,
-            reason: policy.reason
-        }
+            $10,
+            $11,
+            $12,
+            $13,
+
+            $14,
+            $15,
+            $16
+
+        )
+
+        RETURNING id, transaction_id, created_at;
+    `;
+
+
+    const values = [
+
+        transaction.id,
+
+        baseline.classification,
+        baseline.recoveryScore,
+        baseline.recommendedAction,
+        baseline.confidence,
+
+        aiDecision.classification,
+        aiDecision.recoveryScore,
+        aiDecision.recommendedAction,
+        aiDecision.confidence,
+
+        comparison.classificationAgreement,
+        comparison.actionAgreement,
+        comparison.scoreDifference,
+        comparison.severity,
+
+        policy.decision,
+        policy.action,
+        policy.reason
+    ];
+
+   // console.log("INSERTING AUDIT INTO POSTGRESQL...");
+
+
+    const result =
+        await pool.query(
+            query,
+            values
+        );
+
+     //   console.log(
+    //"POSTGRES INSERT RESULT:",
+   // result.rows
+//);
+
+
+    const row = result.rows[0];
+
+
+    return {
+        id: `AUDIT_${row.id}`,
+
+        timestamp: row.created_at,
+
+        transactionId: row.transaction_id
     };
-
-    auditLogs.push(auditEntry);
-
-    return auditEntry;
 }
 
 
-function getAuditLogs() {
-    return auditLogs;
+async function getAuditLogs() {
+
+    const result = await pool.query(`
+        SELECT *
+        FROM audit_logs
+        ORDER BY created_at DESC
+    `);
+
+    return result.rows;
 }
 
 
-function getAuditLogByTransactionId(transactionId) {
+async function getAuditLogByTransactionId(
+    transactionId
+) {
 
-    return auditLogs.filter(
-        (log) =>
-            log.transactionId === transactionId
+    const result = await pool.query(
+        `
+        SELECT *
+        FROM audit_logs
+        WHERE transaction_id = $1
+        ORDER BY created_at DESC
+        `,
+        [transactionId]
     );
+
+    return result.rows;
 }
 
-function getAuditLogsBySeverity(severity) {
 
-    return auditLogs.filter(
-        (log) =>
-            log.comparison.severity === severity
+async function getAuditLogsBySeverity(
+    severity
+) {
+
+
+    const result = await pool.query(
+        `
+        SELECT *
+        FROM audit_logs
+        WHERE severity = $1
+        ORDER BY created_at DESC
+        `,
+        [severity]
     );
+
+    return result.rows;
 }
 
 
