@@ -1,0 +1,53 @@
+.transactions-page { display: flex; flex-direction: column; gap: 20px; }
+
+.filters-bar { padding: 16px 20px; }
+
+.filters-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  align-items: flex-end;
+}
+
+.filter-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.filter-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.filter-input,
+.filter-select {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  padding: 7px 12px;
+  outline: none;
+  transition: border-color 0.15s;
+  min-width: 180px;
+}
+.filter-input:focus,
+.filter-select:focus { border-color: var(--accent); }
+
+.filter-input::placeholder { color: var(--text-muted); }
+
+.filter-select option { background: var(--bg-elevated); color: var(--text-primary); }
+
+.clear-filters-btn { align-self: flex-end; }
+
+.filter-meta { margin-top: 10px; }
+
+@media (max-width: 700px) {
+  .filters-row { flex-direction: column; }
+  .filter-input, .filter-select { min-width: 100%; }
+}
