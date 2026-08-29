@@ -105,7 +105,8 @@ async function createAuditLog({
 
 
     return {
-        id: `AUDIT_${row.id}`,
+        id: `AUDIT_${row.id}`,   // public label e.g. "AUDIT_11"
+        dbId: row.id,            // raw BIGINT numeric id for FK use
 
         timestamp: row.created_at,
 

@@ -5,17 +5,17 @@ async function getCustomerById(id) {
 
     const result = await pool.query(
         `
-        SELECT
-            id,
-            total_payments,
-            successful_payments,
-            failed_payments,
-            chargebacks,
-            previous_recoveries,
-            total_spent,
-            average_transaction_amount
-        FROM customers
-        WHERE id = $1
+       SELECT
+    id,
+    total_payments AS "totalPayments",
+    successful_payments AS "successfulPayments",
+    failed_payments AS "failedPayments",
+    chargebacks,
+    previous_recoveries AS "previousRecoveries",
+    total_spent AS "totalSpent",
+    average_transaction_amount AS "averageTransactionAmount"
+    FROM customers
+    WHERE id = $1
         `,
         [id]
     );

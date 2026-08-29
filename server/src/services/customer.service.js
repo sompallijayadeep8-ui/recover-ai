@@ -16,17 +16,17 @@ function buildCustomerContext(customer) {
     }
 
     const successRate =
-        customer.total_payments === 0
+        customer.totalPayments === 0
             ? 0
-            : customer.successful_payments /
-              customer.total_payments;
+            : customer.successfulPayments /
+              customer.totalPayments;
 
 
     const averageTransactionAmount =
-        customer.total_payments === 0
+        customer.totalPayments === 0
             ? 0
-            : Number(customer.total_spent) /
-              customer.total_payments;
+            : Number(customer.totalSpent) /
+              customer.totalPayments;
 
 
     return {
@@ -36,13 +36,13 @@ function buildCustomerContext(customer) {
         paymentHistory: {
 
             totalPayments:
-                customer.total_payments,
+                customer.totalPayments,
 
             successfulPayments:
-                customer.successful_payments,
+                customer.successfulPayments,
 
             failedPayments:
-                customer.failed_payments,
+                customer.failedPayments,
 
             successRate:
                 Number(
@@ -59,13 +59,13 @@ function buildCustomerContext(customer) {
         recoveryHistory: {
 
             previousRecoveries:
-                customer.previous_recoveries
+                customer.previousRecoveries
         },
 
         spending: {
 
             totalSpent:
-                Number(customer.total_spent),
+                Number(customer.totalSpent),
 
             averageTransactionAmount:
                 Number(

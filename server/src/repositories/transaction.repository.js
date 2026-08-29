@@ -7,12 +7,12 @@ async function getTransactionById(id) {
         `
         SELECT
             id,
-            customer_id,
+            customer_id AS "customerId",
             amount,
             currency,
             status,
-            failure_reason,
-            retry_count
+            failure_reason AS "failureReason",
+            retry_count AS "retryCount"
         FROM transactions
         WHERE id = $1
         `,
@@ -29,12 +29,12 @@ async function getAllTransactions() {
         `
         SELECT
             id,
-            customer_id,
+            customer_id AS "customerId",
             amount,
             currency,
             status,
-            failure_reason,
-            retry_count
+            failure_reason AS "failureReason",
+            retry_count AS "retryCount"
         FROM transactions
         ORDER BY id
         `
@@ -43,30 +43,42 @@ async function getAllTransactions() {
     return result.rows;
 }
 
-async function recoverTransaction(id) {
 
-    const result = await pool.query(
+// client is optional — pass a pg PoolClient to run inside a transaction
+async function recoverTransaction(id, outcome, client) {
+
+    const db = client || pool;
+
+    const result = await db.query(
         `
         UPDATE transactions
         SET
             retry_count = retry_count + 1,
-            status = 'SUCCESS',
-            failure_reason = NULL,
+            status = $2,
             updated_at = NOW()
         WHERE id = $1
         RETURNING
             id,
-            customer_id,
+            customer_id AS "customerId",
             amount,
             currency,
             status,
-            failure_reason,
-            retry_count
+            failure_reason AS "failureReason",
+            retry_count AS "retryCount"
         `,
-        [id]
+        [
+            id,
+            outcome.status
+        ]
     );
 
-    return result.rows[0] || null;
+    if (!result.rows[0]) {
+        throw new Error(
+            `recoverTransaction: no transaction found with id="${id}"`
+        );
+    }
+
+    return result.rows[0];
 }
 
 
