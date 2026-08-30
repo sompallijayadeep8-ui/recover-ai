@@ -16,7 +16,21 @@ export default function AuditLogs() {
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState(null);
   const [severity, setSeverity] = useState('ALL');
+  const [copiedId, setCopiedId] = useState(null);
   const retryRef = useRef(null);
+  const copyTimeoutRef = useRef(null);
+
+  const handleCopyAuditId = (e, auditIdText) => {
+    e.stopPropagation();
+    if (!navigator.clipboard) return;
+    navigator.clipboard.writeText(auditIdText).then(() => {
+      setCopiedId(auditIdText);
+      if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current);
+      copyTimeoutRef.current = setTimeout(() => setCopiedId(null), 1500);
+    }).catch(() => { /* clipboard unavailable — ignore */ });
+  };
+
+  useEffect(() => () => { if (copyTimeoutRef.current) clearTimeout(copyTimeoutRef.current); }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -65,7 +79,7 @@ export default function AuditLogs() {
       ) : logs.length === 0 ? (
         <EmptyState icon="⊙" title="No audit logs found" message={severity !== 'ALL' ? `No ${severity} severity audit logs found.` : 'No audit records in the system yet.'} />
       ) : (
-        <div className="table-wrap">
+        <div className="table-wrap audit-table-wrap">
           <table>
             <thead>
               <tr>
@@ -80,9 +94,23 @@ export default function AuditLogs() {
               </tr>
             </thead>
             <tbody>
-              {logs.map(log => (
+              {logs.map(log => {
+                const auditIdText = `AUDIT_${log.id}`;
+                return (
                 <tr key={log.id} className="clickable" onClick={() => navigate(`/transactions/${log.transaction_id}`)}>
-                  <td><span className="mono text-muted">AUDIT_{log.id}</span></td>
+                  <td>
+                    <button
+                      type="button"
+                      className="audit-id-copy"
+                      onClick={e => handleCopyAuditId(e, auditIdText)}
+                      aria-label={`Copy audit ID ${auditIdText}`}
+                    >
+                      <span className="mono text-muted">{auditIdText}</span>
+                      <span className={`audit-id-copy-label${copiedId === auditIdText ? ' audit-id-copy-label--copied' : ''}`}>
+                        {copiedId === auditIdText ? 'Copied!' : 'Copy'}
+                      </span>
+                    </button>
+                  </td>
                   <td><span className="mono text-accent">{log.transaction_id}</span></td>
                   <td><span className={`badge ${getSeverityClass(log.severity)}`}>{log.severity || '—'}</span></td>
                   <td>
@@ -104,7 +132,8 @@ export default function AuditLogs() {
                   </td>
                   <td className="text-muted" style={{ fontSize: '0.78rem' }}>{formatDate(log.created_at)}</td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

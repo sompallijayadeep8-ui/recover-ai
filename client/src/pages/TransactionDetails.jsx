@@ -272,21 +272,28 @@ export default function TransactionDetails() {
                 <span className="success-notice-icon" aria-hidden="true">✓</span>
                 <span>Payment successful — no recovery action required.</span>
               </div>
-            ) : (
-              <>
-                <button className="btn btn-ghost" onClick={handleAnalyze} disabled={analyzing} aria-label="Analyze recovery">
-                  {analyzing ? 'Analyzing…' : '⊙ Analyze Recovery'}
+            ) : !analysis ? (
+              <button className="btn btn-ghost" onClick={handleAnalyze} disabled={analyzing} aria-label="Analyze recovery">
+                {analyzing ? 'Analyzing…' : '⊙ Analyze Recovery'}
+              </button>
+            ) : analysis.policy?.decision === 'BLOCK' ? (
+              <div className="blocked-notice" role="status">
+                <span className="blocked-notice-icon" aria-hidden="true">⛔</span>
+                <span>Recovery blocked — {analysis.policy?.reason || 'this transaction is not eligible for automatic recovery.'}</span>
+              </div>
+            ) : analysis.policy?.decision === 'REVIEW' ? (
+              <div className="review-notice" role="status">
+                <span className="review-notice-icon" aria-hidden="true">◐</span>
+                <span>Flagged for human review — {analysis.policy?.reason || 'a manual decision is required.'}</span>
+              </div>
+            ) : canRetry ? (
+              <div className="retry-section">
+                <span className="retry-hint text-muted">Latest policy decision allows retry.</span>
+                <button className="btn btn-primary" onClick={() => setShowModal(true)} disabled={retrying} aria-label="Retry payment">
+                  {retrying ? 'Retrying…' : '↺ Retry Payment'}
                 </button>
-                {canRetry && (
-                  <div className="retry-section">
-                    <span className="retry-hint text-muted">Latest policy decision allows retry.</span>
-                    <button className="btn btn-primary" onClick={() => setShowModal(true)} disabled={retrying} aria-label="Retry payment">
-                      {retrying ? 'Retrying…' : '↺ Retry Payment'}
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
+              </div>
+            ) : null}
           </div>
 
           {txn.status !== 'SUCCESS' && analyzeError && <div className="inline-error" role="alert">⚠ {analyzeError}</div>}

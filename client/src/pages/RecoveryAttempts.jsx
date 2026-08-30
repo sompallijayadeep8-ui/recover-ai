@@ -3,9 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { getAllRecoveryAttempts } from '../services/api';
 import ErrorState from '../components/ErrorState';
 import EmptyState from '../components/EmptyState';
+import StatusBadge from '../components/StatusBadge';
 import { SkeletonTable } from '../components/LoadingState';
 import { formatCurrency, formatDate } from '../utils/formatters';
-import { getStatusClass } from '../utils/status';
+import './RecoveryAttempts.css';
 
 export default function RecoveryAttempts() {
   const navigate = useNavigate();
@@ -41,7 +42,7 @@ export default function RecoveryAttempts() {
 
   return (
     <div className="recovery-page">
-      <div className="table-wrap">
+      <div className="table-wrap recovery-table-wrap">
         <table>
           <thead>
             <tr>
@@ -57,9 +58,9 @@ export default function RecoveryAttempts() {
             {attempts.map(a => (
               <tr key={a.id} className="clickable" onClick={() => navigate(`/transactions/${a.transaction_id}`)}>
                 <td><span className="mono text-accent">{a.transaction_id}</span></td>
-                <td>{a.attempt_number}</td>
+                <td className="mono text-secondary">#{a.attempt_number}</td>
                 <td><span className="badge badge-accent">{a.action}</span></td>
-                <td><span className={`badge ${getStatusClass(a.status)}`}>{a.status}</span></td>
+                <td><StatusBadge status={a.status} /></td>
                 <td style={{ fontWeight: 600 }}>{formatCurrency(a.amount)}</td>
                 <td className="text-muted">{formatDate(a.created_at)}</td>
               </tr>

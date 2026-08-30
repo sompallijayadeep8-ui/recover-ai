@@ -145,3 +145,33 @@
   font-weight: 500;
 }
 .success-notice-icon { font-size: 1rem; font-weight: 700; }
+
+/* Human review notice (FAILED + REVIEW policy decision) */
+.review-notice {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  color: var(--warning);
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.review-notice-icon { font-size: 1rem; font-weight: 700; }
+
+/* Recovery blocked notice (FAILED + BLOCK policy decision) */
+.blocked-notice {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-border);
+  color: var(--danger);
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.blocked-notice-icon { font-size: 1rem; font-weight: 700; }

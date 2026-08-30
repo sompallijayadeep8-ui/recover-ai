@@ -5,14 +5,38 @@ import ErrorState from '../components/ErrorState';
 import { SkeletonTable } from '../components/LoadingState';
 import './Transactions.css';
 
+const FILTERS_STORAGE_KEY = 'recoverai:transactions-filters';
+
+function loadPersistedFilters() {
+  try {
+    const raw = sessionStorage.getItem(FILTERS_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
 export default function Transactions() {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [search, setSearch]       = useState('');
-  const [statusFilter, setStatus] = useState('');
-  const [reasonFilter, setReason] = useState('');
+  const initialFilters = loadPersistedFilters();
+  const [search, setSearch]       = useState(initialFilters.search || '');
+  const [statusFilter, setStatus] = useState(initialFilters.status || '');
+  const [reasonFilter, setReason] = useState(initialFilters.reason || '');
   const retryRef = useRef(null);
+
+  // Persist filters so they're restored when navigating back to this page
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        FILTERS_STORAGE_KEY,
+        JSON.stringify({ search, status: statusFilter, reason: reasonFilter })
+      );
+    } catch {
+      /* sessionStorage unavailable — filters just won't persist */
+    }
+  }, [search, statusFilter, reasonFilter]);
 
   useEffect(() => {
     let cancelled = false;
@@ -86,7 +110,7 @@ export default function Transactions() {
           )}
         </div>
         <div className="filter-meta">
-          {!loading && <span className="text-muted" style={{ fontSize: '0.8rem' }}>{filtered.length} of {transactions.length} transactions</span>}
+          {!loading && <span className="text-muted" style={{ fontSize: '0.8rem' }}>{filtered.length} matching · {transactions.length} total</span>}
         </div>
       </div>
       {loading ? <SkeletonTable rows={8} cols={7} /> : <TransactionTable transactions={filtered} />}

@@ -1,6 +1,11 @@
 .transactions-page { display: flex; flex-direction: column; gap: 20px; }
 
-.filters-bar { padding: 16px 20px; }
+.filters-bar {
+  padding: 16px 20px;
+  position: sticky;
+  top: var(--topbar-height);
+  z-index: 40;
+}
 
 .filters-row {
   display: flex;

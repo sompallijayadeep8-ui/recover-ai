@@ -1,0 +1,5 @@
+/* Slightly roomier rows for the recovery attempts table */
+.recovery-table-wrap tbody td {
+  padding-top: 14px;
+  padding-bottom: 14px;
+}

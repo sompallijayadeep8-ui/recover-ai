@@ -40,3 +40,36 @@
   color: var(--accent);
   border-color: var(--accent-border);
 }
+
+/* Sticky header for the audit log table */
+.audit-table-wrap {
+  max-height: 65vh;
+  overflow-y: auto;
+}
+.audit-table-wrap thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+/* Copy Audit ID interaction */
+.audit-id-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.audit-id-copy:hover { background: var(--bg-elevated); }
+.audit-id-copy-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  transition: color 0.15s;
+}
+.audit-id-copy-label--copied { color: var(--success); }
